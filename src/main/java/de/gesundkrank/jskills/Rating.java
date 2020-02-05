@@ -24,6 +24,10 @@ public class Rating {
     // A conservative estimate of skill based on the mean and standard deviation.
     private final double conservativeRating;
 
+    public Rating() {
+        this(GameInfo.getDefaultGameInfo().getInitialMean(), GameInfo.getDefaultGameInfo().getInitialStandardDeviation());
+    }
+
     /**
      * Constructs a rating.
      *
@@ -128,11 +132,7 @@ public class Rating {
         if (Double.compare(rating.getStandardDeviation(), getStandardDeviation()) != 0) {
             return false;
         }
-        if (Double.compare(rating.getConservativeRating(), getConservativeRating()) != 0) {
-            return false;
-        }
-
-        return true;
+        return Double.compare(rating.getConservativeRating(), getConservativeRating()) == 0;
     }
 
     @Override
@@ -140,13 +140,13 @@ public class Rating {
         int result;
         long temp;
         temp = Double.doubleToLongBits(getConservativeStandardDeviationMultiplier());
-        result = (int) (temp ^ (temp >>> 32));
+        result = (int) (temp ^ temp >>> 32);
         temp = Double.doubleToLongBits(getMean());
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (int) (temp ^ temp >>> 32);
         temp = Double.doubleToLongBits(getStandardDeviation());
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (int) (temp ^ temp >>> 32);
         temp = Double.doubleToLongBits(getConservativeRating());
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (int) (temp ^ temp >>> 32);
         return result;
     }
 
