@@ -1,3 +1,11 @@
 package de.gesundkrank.jskills;
 
-public interface IPlayer { }
+@FunctionalInterface
+public interface IPlayer<T> {
+
+    T getId();
+
+    boolean equals(Object o);
+
+    int hashCode();
+}

@@ -3,7 +3,7 @@ package de.gesundkrank.jskills;
 /**
  * Represents a player who has a {@link Rating}.
  */
-public class Player<T> implements IPlayer, SupportPartialPlay, SupportPartialUpdate {
+public class Player<T> implements IPlayer<T>, SupportPartialPlay, SupportPartialUpdate {
 
     // = 100% play time
     private static final double DefaultPartialPlayPercentage = 1.0;
@@ -84,7 +84,7 @@ public class Player<T> implements IPlayer, SupportPartialPlay, SupportPartialUpd
 
         if (Double.compare(player.getPartialPlayPercentage(), getPartialPlayPercentage()) != 0) return false;
         if (Double.compare(player.getPartialUpdatePercentage(), getPartialUpdatePercentage()) != 0) return false;
-        return !(getId() != null ? !getId().equals(player.getId()) : player.getId() != null);
+        return getId() != null ? getId().equals(player.getId()) : player.getId() == null;
 
     }
 
@@ -94,9 +94,9 @@ public class Player<T> implements IPlayer, SupportPartialPlay, SupportPartialUpd
         long temp;
         result = getId() != null ? getId().hashCode() : 0;
         temp = Double.doubleToLongBits(getPartialPlayPercentage());
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (int) (temp ^ temp >>> 32);
         temp = Double.doubleToLongBits(getPartialUpdatePercentage());
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (int) (temp ^ temp >>> 32);
         return result;
     }
 
