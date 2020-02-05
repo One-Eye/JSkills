@@ -8,10 +8,14 @@ import de.gesundkrank.jskills.PairwiseComparison;
 import de.gesundkrank.jskills.RankSorter;
 import de.gesundkrank.jskills.Rating;
 import de.gesundkrank.jskills.SkillCalculator;
-
 import de.gesundkrank.jskills.numerics.Range;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import static de.gesundkrank.jskills.numerics.MathUtils.square;
@@ -39,7 +43,7 @@ public class TwoTeamTrueSkillCalculator extends SkillCalculator {
         ITeam team1 = teamsl.get(0);
         ITeam team2 = teamsl.get(1);
 
-        boolean wasDraw = (teamRanks[0] == teamRanks[1]);
+        boolean wasDraw = teamRanks[0] == teamRanks[1];
 
         HashMap<IPlayer, Rating> results = new HashMap<>();
 
@@ -63,13 +67,14 @@ public class TwoTeamTrueSkillCalculator extends SkillCalculator {
                                             ITeam selfTeam,
                                             ITeam otherTeam,
                                             PairwiseComparison selfToOtherTeamComparison) {
-        double drawMargin =
-                DrawMargin.GetDrawMarginFromDrawProbability(gameInfo.getDrawProbability(),
-                                                            gameInfo.getBeta());
-        double betaSquared = square(gameInfo.getBeta());
-        double tauSquared = square(gameInfo.getDynamicsFactor());
 
         int totalPlayers = selfTeam.size() + otherTeam.size();
+
+        double drawMargin =
+                DrawMargin.getDrawMarginFromDrawProbability(gameInfo.getDrawProbability(),
+                        gameInfo.getBeta(), totalPlayers);
+        double betaSquared = square(gameInfo.getBeta());
+        double tauSquared = square(gameInfo.getDynamicsFactor());
 
         double selfMeanSum = 0;
         for (Rating r : selfTeam.values()) {
@@ -131,7 +136,7 @@ public class TwoTeamTrueSkillCalculator extends SkillCalculator {
                     stdDevMultiplier =
                     (square(previousPlayerRating.getStandardDeviation()) + tauSquared) / square(c);
 
-            double playerMeanDelta = (rankMultiplier * meanMultiplier * v);
+            double playerMeanDelta = rankMultiplier * meanMultiplier * v;
             double newMean = previousPlayerRating.getMean() + playerMeanDelta;
 
             double newStdDev =
@@ -188,14 +193,14 @@ public class TwoTeamTrueSkillCalculator extends SkillCalculator {
 
         double sqrtPart
                 = Math.sqrt(
-                (totalPlayers * betaSquared)
+                totalPlayers * betaSquared
                 /
                 (totalPlayers * betaSquared + team1StdDevSquared + team2SigmaSquared)
         );
 
         double expPart
                 = Math.exp(
-                (-1 * square(team1MeanSum - team2MeanSum))
+                -1 * square(team1MeanSum - team2MeanSum)
                 /
                 (2 * (totalPlayers * betaSquared + team1StdDevSquared + team2SigmaSquared))
         );

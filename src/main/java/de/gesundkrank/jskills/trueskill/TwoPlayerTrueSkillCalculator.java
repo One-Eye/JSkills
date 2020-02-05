@@ -2,7 +2,6 @@ package de.gesundkrank.jskills.trueskill;
 
 import de.gesundkrank.jskills.GameInfo;
 import de.gesundkrank.jskills.Guard;
-
 import de.gesundkrank.jskills.IPlayer;
 import de.gesundkrank.jskills.ITeam;
 import de.gesundkrank.jskills.PairwiseComparison;
@@ -11,7 +10,12 @@ import de.gesundkrank.jskills.Rating;
 import de.gesundkrank.jskills.SkillCalculator;
 import de.gesundkrank.jskills.numerics.Range;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import static de.gesundkrank.jskills.numerics.MathUtils.square;
 
@@ -23,8 +27,8 @@ import static de.gesundkrank.jskills.numerics.MathUtils.square;
 public class TwoPlayerTrueSkillCalculator extends SkillCalculator {
 
     public TwoPlayerTrueSkillCalculator() {
-        super(EnumSet.noneOf(SupportedOptions.class), Range.<ITeam>exactly(2),
-              Range.<IPlayer>exactly(1));
+        super(EnumSet.noneOf(SupportedOptions.class), Range.exactly(2),
+                Range.exactly(1));
     }
 
     @Override
@@ -46,7 +50,7 @@ public class TwoPlayerTrueSkillCalculator extends SkillCalculator {
         IPlayer loser = losingTeam.keySet().iterator().next();
         Rating loserPreviousRating = losingTeam.get(loser);
 
-        boolean wasDraw = (teamRanks[0] == teamRanks[1]);
+        boolean wasDraw = teamRanks[0] == teamRanks[1];
 
         Map<IPlayer, Rating> results = new HashMap<IPlayer, Rating>();
         results.put(winner, calculateNewRating(gameInfo, winnerPreviousRating, loserPreviousRating,
@@ -65,8 +69,8 @@ public class TwoPlayerTrueSkillCalculator extends SkillCalculator {
 
         double
                 drawMargin =
-                DrawMargin.GetDrawMarginFromDrawProbability(gameInfo.getDrawProbability(),
-                                                            gameInfo.getBeta());
+                DrawMargin.getDrawMarginFromDrawProbability(gameInfo.getDrawProbability(),
+                        gameInfo.getBeta(), 2);
 
         double c =
                 Math.sqrt(
@@ -116,7 +120,7 @@ public class TwoPlayerTrueSkillCalculator extends SkillCalculator {
                 square(selfRating.getStandardDeviation()) + square(gameInfo.getDynamicsFactor());
         double stdDevMultiplier = varianceWithDynamics / square(c);
 
-        double newMean = selfRating.getMean() + (rankMultiplier * meanMultiplier * v);
+        double newMean = selfRating.getMean() + rankMultiplier * meanMultiplier * v;
         double newStdDev = Math.sqrt(varianceWithDynamics * (1 - w * stdDevMultiplier));
 
         return new Rating(newMean, newStdDev);
@@ -140,14 +144,14 @@ public class TwoPlayerTrueSkillCalculator extends SkillCalculator {
         // This is the square root part of the equation:
         double sqrtPart =
                 Math.sqrt(
-                        (2 * betaSquared)
+                        2 * betaSquared
                         /
                         (2 * betaSquared + player1SigmaSquared + player2SigmaSquared));
 
         // This is the exponent part of the equation:
         double expPart =
                 Math.exp(
-                        (-1 * square(player1Rating.getMean() - player2Rating.getMean()))
+                        -1 * square(player1Rating.getMean() - player2Rating.getMean())
                         /
                         (2 * (2 * betaSquared + player1SigmaSquared + player2SigmaSquared)));
 

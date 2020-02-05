@@ -1,5 +1,9 @@
 package de.gesundkrank.jskills.trueskill;
 
+import de.gesundkrank.jskills.GameInfo;
+import de.gesundkrank.jskills.IPlayer;
+import de.gesundkrank.jskills.ITeam;
+import de.gesundkrank.jskills.Rating;
 import de.gesundkrank.jskills.factorgraphs.Factor;
 import de.gesundkrank.jskills.factorgraphs.FactorGraph;
 import de.gesundkrank.jskills.factorgraphs.FactorGraphLayerBase;
@@ -7,19 +11,20 @@ import de.gesundkrank.jskills.factorgraphs.FactorList;
 import de.gesundkrank.jskills.factorgraphs.KeyedVariable;
 import de.gesundkrank.jskills.factorgraphs.Schedule;
 import de.gesundkrank.jskills.factorgraphs.ScheduleSequence;
+import de.gesundkrank.jskills.numerics.GaussianDistribution;
 import de.gesundkrank.jskills.trueskill.layers.IteratedTeamDifferencesInnerLayer;
 import de.gesundkrank.jskills.trueskill.layers.PlayerPerformancesToTeamPerformancesLayer;
-import de.gesundkrank.jskills.GameInfo;
-import de.gesundkrank.jskills.IPlayer;
-import de.gesundkrank.jskills.ITeam;
-import de.gesundkrank.jskills.Rating;
-import de.gesundkrank.jskills.numerics.GaussianDistribution;
 import de.gesundkrank.jskills.trueskill.layers.PlayerPriorValuesToSkillsLayer;
 import de.gesundkrank.jskills.trueskill.layers.PlayerSkillsToPerformancesLayer;
 import de.gesundkrank.jskills.trueskill.layers.TeamDifferencesComparisonLayer;
 import de.gesundkrank.jskills.trueskill.layers.TeamPerformancesToTeamPerformanceDifferencesLayer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TrueSkillFactorGraph extends FactorGraph<TrueSkillFactorGraph> {
 
@@ -31,14 +36,18 @@ public class TrueSkillFactorGraph extends FactorGraph<TrueSkillFactorGraph> {
         this.priorLayer = new PlayerPriorValuesToSkillsLayer(this, teams);
         setGameInfo(gameInfo);
 
+        int totalNumberOfPlayers = teams.stream()
+                .mapToInt(Map::size)
+                .sum();
+
         this.layers = new ArrayList<>();
-        this.layers.add(priorLayer);
-        this.layers.add(new PlayerSkillsToPerformancesLayer(this));
-        this.layers.add(new PlayerPerformancesToTeamPerformancesLayer(this));
-        this.layers.add(new IteratedTeamDifferencesInnerLayer(
+        layers.add(priorLayer);
+        layers.add(new PlayerSkillsToPerformancesLayer(this));
+        layers.add(new PlayerPerformancesToTeamPerformancesLayer(this));
+        layers.add(new IteratedTeamDifferencesInnerLayer(
                 this,
                 new TeamPerformancesToTeamPerformanceDifferencesLayer(this),
-                new TeamDifferencesComparisonLayer(this, teamRanks)));
+                new TeamDifferencesComparisonLayer(this, teamRanks, totalNumberOfPlayers)));
     }
 
     public GameInfo getGameInfo() {
@@ -114,7 +123,7 @@ public class TrueSkillFactorGraph extends FactorGraph<TrueSkillFactorGraph> {
         for (List<KeyedVariable<IPlayer, GaussianDistribution>> currentTeam : priorLayer
                 .getOutputVariablesGroups()) {
             for (KeyedVariable<IPlayer, GaussianDistribution> currentPlayer : currentTeam) {
-                final Rating rating = new Rating(currentPlayer.getValue().getMean(),
+                Rating rating = new Rating(currentPlayer.getValue().getMean(),
                                                  currentPlayer.getValue().getStandardDeviation());
                 result.put(currentPlayer.getKey(), rating);
             }
